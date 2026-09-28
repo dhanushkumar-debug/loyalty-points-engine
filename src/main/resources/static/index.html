@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retail Loyalty Points Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+    <!-- Navbar -->
+    <header class="bg-gray-800 border-b border-gray-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-amber-500 text-gray-900 p-2.5 rounded-xl text-xl font-bold">
+                    <i class="fa-solid fa-gem"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-white tracking-wide">Loyalty Points Engine</h1>
+                    <p class="text-xs text-amber-400 font-medium">Tier-Based Retail Rewards System</p>
+                </div>
+            </div>
+            <nav class="flex space-x-2 bg-gray-900 p-1.5 rounded-xl border border-gray-700">
+                <button onclick="switchTab('customers')" id="tab-customers" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold transition bg-amber-500 text-gray-950">
+                    <i class="fa-solid fa-users mr-1.5"></i> Customers
+                </button>
+                <button onclick="switchTab('purchases')" id="tab-purchases" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold transition text-gray-400 hover:text-white">
+                    <i class="fa-solid fa-cart-shopping mr-1.5"></i> Purchases
+                </button>
+                <button onclick="switchTab('ledger')" id="tab-ledger" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold transition text-gray-400 hover:text-white">
+                    <i class="fa-solid fa-book-journal-whills mr-1.5"></i> Points Ledger
+                </button>
+                <button onclick="switchTab('tiers')" id="tab-tiers" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold transition text-gray-400 hover:text-white">
+                    <i class="fa-solid fa-award mr-1.5"></i> Tiers
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+
+        <!-- Notification Toast -->
+        <div id="toast" class="hidden mb-6 p-4 rounded-xl border text-sm font-medium flex items-center justify-between">
+            <span id="toast-message"></span>
+            <button onclick="hideToast()" class="text-xs opacity-75 hover:opacity-100 ml-4"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- CUSTOMERS SECTION -->
+        <section id="sec-customers" class="tab-content space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Add Customer Form -->
+                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6 shadow-xl">
+                    <h2 class="text-lg font-bold text-white mb-4 flex items-center">
+                        <i class="fa-solid fa-user-plus text-amber-400 mr-2"></i> Register New Customer
+                    </h2>
+                    <form onsubmit="createCustomer(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Customer Name</label>
+                            <input type="text" id="cust-name" required placeholder="John Doe" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Email Address</label>
+                            <input type="email" id="cust-email" required placeholder="john@example.com" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Phone Number</label>
+                            <input type="text" id="cust-phone" required placeholder="9876543210" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400">
+                        </div>
+                        <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-gray-950 font-bold py-3 rounded-xl transition shadow-lg text-sm">
+                            <i class="fa-solid fa-check mr-1.5"></i> Register Customer
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Customer List Table -->
+                <div class="lg:col-span-2 bg-gray-800 border border-gray-700 rounded-2xl p-6 shadow-xl">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-bold text-white flex items-center">
+                            <i class="fa-solid fa-users-rectangle text-amber-400 mr-2"></i> Registered Customers
+                        </h2>
+                        <button onclick="loadCustomers()" class="text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1.5 rounded-lg transition">
+                            <i class="fa-solid fa-rotate mr-1"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-gray-900/60 text-gray-400 uppercase text-xs">
+                                <tr>
+                                    <th class="py-3 px-4">ID</th>
+                                    <th class="py-3 px-4">Name</th>
+                                    <th class="py-3 px-4">Email / Phone</th>
+                                    <th class="py-3 px-4 text-center">Total Pts</th>
+                                    <th class="py-3 px-4 text-center">Available Pts</th>
+                                    <th class="py-3 px-4 text-center">Tier</th>
+                                    <th class="py-3 px-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customers-table-body" class="divide-y divide-gray-700">
+                                <tr><td colspan="7" class="text-center py-6 text-gray-500">Loading customers...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PURCHASES SECTION -->
+        <section id="sec-purchases" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Record Purchase Form -->
+                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6 shadow-xl">
+                    <h2 class="text-lg font-bold text-white mb-4 flex items-center">
+                        <i class="fa-solid fa-cash-register text-emerald-400 mr-2"></i> Record New Purchase
+                    </h2>
+                    <form onsubmit="createPurchase(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Select Customer</label>
+                            <select id="pur-customer-id" required class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-400">
+                                <option value="">-- Choose Customer --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Purchase Amount (₹)</label>
+                            <input type="number" step="0.01" min="1" id="pur-amount" required placeholder="500.00" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-400">
+                            <p class="text-xs text-gray-500 mt-1"><i class="fa-solid fa-circle-info mr-1"></i> 1 ₹ = 1 Loyalty Point earned automatically.</p>
+                        </div>
+                        <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-bold py-3 rounded-xl transition shadow-lg text-sm">
+                            <i class="fa-solid fa-bag-shopping mr-1.5"></i> Complete Purchase
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Purchases History Table -->
+                <div class="lg:col-span-2 bg-gray-800 border border-gray-700 rounded-2xl p-6 shadow-xl">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-bold text-white flex items-center">
+                            <i class="fa-solid fa-receipt text-emerald-400 mr-2"></i> Purchase History
+                        </h2>
+                        <button onclick="loadPurchases()" class="text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1.5 rounded-lg transition">
+                            <i class="fa-solid fa-rotate mr-1"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-gray-900/60 text-gray-400 uppercase text-xs">
+                                <tr>
+                                    <th class="py-3 px-4">Purchase ID</th>
+                                    <th class="py-3 px-4">Customer ID</th>
+                                    <th class="py-3 px-4">Amount</th>
+                                    <th class="py-3 px-4 text-center">Points Earned</th>
+                                </tr>
+                            </thead>
+                            <tbody id="purchases-table-body" class="divide-y divide-gray-700">
+                                <tr><td colspan="4" class="text-center py-6 text-gray-500">Loading purchase history...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- POINTS LEDGER SECTION -->
+        <section id="sec-ledger" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Redeem Points Form -->
+                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6 shadow-xl">
+                    <h2 class="text-lg font-bold text-white mb-4 flex items-center">
+                        <i class="fa-solid fa-gift text-purple-400 mr-2"></i> Redeem Loyalty Points
+                    </h2>
+                    <form onsubmit="createLedgerEntry(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Select Customer</label>
+                            <select id="led-customer-id" required class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-purple-400">
+                                <option value="">-- Choose Customer --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Points to Redeem</label>
+                            <input type="number" min="1" id="led-points" required placeholder="100" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-purple-400">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Transaction Type</label>
+                            <select id="led-type" required class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-purple-400">
+                                <option value="REDEEM">REDEEM (Deduct Available Points)</option>
+                                <option value="EARN">EARN (Add Manual Points)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Description</label>
+                            <input type="text" id="led-desc" placeholder="Store voucher discount" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-purple-400">
+                        </div>
+                        <button type="submit" class="w-full bg-purple-500 hover:bg-purple-400 text-gray-950 font-bold py-3 rounded-xl transition shadow-lg text-sm">
+                            <i class="fa-solid fa-arrow-right-arrow-left mr-1.5"></i> Submit Transaction
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Points Ledger Table -->
+                <div class="lg:col-span-2 bg-gray-800 border border-gray-700 rounded-2xl p-6 shadow-xl">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-bold text-white flex items-center">
+                            <i class="fa-solid fa-list-check text-purple-400 mr-2"></i> Points Audit Ledger
+                        </h2>
+                        <button onclick="loadLedger()" class="text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1.5 rounded-lg transition">
+                            <i class="fa-solid fa-rotate mr-1"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-gray-900/60 text-gray-400 uppercase text-xs">
+                                <tr>
+                                    <th class="py-3 px-4">Txn ID</th>
+                                    <th class="py-3 px-4">Customer ID</th>
+                                    <th class="py-3 px-4">Type</th>
+                                    <th class="py-3 px-4 text-center">Points</th>
+                                    <th class="py-3 px-4">Description</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ledger-table-body" class="divide-y divide-gray-700">
+                                <tr><td colspan="5" class="text-center py-6 text-gray-500">Loading ledger entries...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TIERS SECTION -->
+        <section id="sec-tiers" class="tab-content hidden space-y-6">
+            <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6 shadow-xl">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-lg font-bold text-white flex items-center">
+                            <i class="fa-solid fa-crown text-amber-400 mr-2"></i> Reward Tiers Configuration
+                        </h2>
+                        <p class="text-xs text-gray-400">Customer tier level is updated automatically based on Total Points accumulated.</p>
+                    </div>
+                    <button onclick="loadTiers()" class="text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1.5 rounded-lg transition">
+                        <i class="fa-solid fa-rotate mr-1"></i> Refresh
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="tiers-cards-container">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        const API_BASE = '';
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-amber-500', 'text-gray-950');
+                btn.classList.add('text-gray-400');
+            });
+
+            document.getElementById(`sec-${tabName}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tabName}`);
+            activeBtn.classList.add('bg-amber-500', 'text-gray-950');
+            activeBtn.classList.remove('text-gray-400');
+
+            if (tabName === 'customers') loadCustomers();
+            if (tabName === 'purchases') { loadCustomers(); loadPurchases(); }
+            if (tabName === 'ledger') { loadCustomers(); loadLedger(); }
+            if (tabName === 'tiers') loadTiers();
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            toastMsg.innerText = message;
+            toast.className = `mb-6 p-4 rounded-xl border text-sm font-medium flex items-center justify-between ${
+                isError ? 'bg-red-900/50 border-red-500 text-red-200' : 'bg-emerald-900/50 border-emerald-500 text-emerald-200'
+            }`;
+            toast.classList.remove('hidden');
+            setTimeout(hideToast, 5000);
+        }
+
+        function hideToast() {
+            document.getElementById('toast').classList.add('hidden');
+        }
+
+        function getTierBadgeHtml(tier) {
+            const t = (tier || 'Bronze').toUpperCase();
+            if (t === 'GOLD') return `<span class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2.5 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-crown mr-1"></i> GOLD</span>`;
+            if (t === 'SILVER') return `<span class="bg-slate-400/20 text-slate-200 border border-slate-400/40 px-2.5 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-medal mr-1"></i> SILVER</span>`;
+            return `<span class="bg-orange-600/20 text-orange-300 border border-orange-600/40 px-2.5 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-shield mr-1"></i> BRONZE</span>`;
+        }
+
+        async function loadCustomers() {
+            try {
+                const res = await fetch(`${API_BASE}/customers/getAll`);
+                const data = await res.json();
+                
+                const tbody = document.getElementById('customers-table-body');
+                const selectPur = document.getElementById('pur-customer-id');
+                const selectLed = document.getElementById('led-customer-id');
+
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-gray-500">No customers registered yet.</td></tr>`;
+                    return;
+                }
+
+                let rowsHtml = '';
+                let selectOptions = '<option value="">-- Choose Customer --</option>';
+
+                data.forEach(c => {
+                    rowsHtml += `
+                        <tr class="hover:bg-gray-750 transition">
+                            <td class="py-3 px-4 font-bold text-gray-400">#${c.id}</td>
+                            <td class="py-3 px-4 font-semibold text-white">${c.name}</td>
+                            <td class="py-3 px-4 text-xs text-gray-400">${c.email}<br><span class="text-gray-500">${c.phone}</span></td>
+                            <td class="py-3 px-4 text-center font-bold text-amber-400">${c.totalPoints}</td>
+                            <td class="py-3 px-4 text-center font-bold text-emerald-400">${c.availablePoints}</td>
+                            <td class="py-3 px-4 text-center">${getTierBadgeHtml(c.tier)}</td>
+                            <td class="py-3 px-4 text-right">
+                                <button onclick="deleteCustomer(${c.id})" class="text-xs bg-red-500/20 hover:bg-red-500 text-red-300 hover:text-white px-2.5 py-1 rounded-lg transition">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    selectOptions += `<option value="${c.id}">#${c.id} - ${c.name} (Avail: ${c.availablePoints} pts | Tier: ${c.tier})</option>`;
+                });
+
+                tbody.innerHTML = rowsHtml;
+                selectPur.innerHTML = selectOptions;
+                selectLed.innerHTML = selectOptions;
+            } catch (err) {
+                console.error(err);
+                showToast("Failed to load customers.", true);
+            }
+        }
+
+        async function createCustomer(e) {
+            e.preventDefault();
+            const body = {
+                name: document.getElementById('cust-name').value,
+                email: document.getElementById('cust-email').value,
+                phone: document.getElementById('cust-phone').value
+            };
+            try {
+                const res = await fetch(`${API_BASE}/customers/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                if (!res.ok) throw new Error(await res.text());
+                const data = await res.json();
+                showToast(`Customer ${data.name} registered successfully!`);
+                document.getElementById('cust-name').value = '';
+                document.getElementById('cust-email').value = '';
+                document.getElementById('cust-phone').value = '';
+                loadCustomers();
+            } catch (err) {
+                showToast(err.message || "Failed to register customer", true);
+            }
+        }
+
+        async function deleteCustomer(id) {
+            if (!confirm(`Are you sure you want to delete Customer #${id}?`)) return;
+            try {
+                const res = await fetch(`${API_BASE}/customers/delete/${id}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error(await res.text());
+                showToast(`Customer #${id} deleted successfully`);
+                loadCustomers();
+            } catch (err) {
+                showToast(err.message || "Failed to delete customer", true);
+            }
+        }
+
+        async function loadPurchases() {
+            try {
+                const res = await fetch(`${API_BASE}/purchases/getAll`);
+                const data = await res.json();
+                const tbody = document.getElementById('purchases-table-body');
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-gray-500">No purchases recorded yet.</td></tr>`;
+                    return;
+                }
+                tbody.innerHTML = data.map(p => `
+                    <tr class="hover:bg-gray-750 transition">
+                        <td class="py-3 px-4 font-bold text-gray-400">#${p.id}</td>
+                        <td class="py-3 px-4 font-semibold text-white">Customer #${p.customerId}</td>
+                        <td class="py-3 px-4 text-emerald-400 font-bold">₹${p.purchaseAmount.toFixed(2)}</td>
+                        <td class="py-3 px-4 text-center font-bold text-amber-400">+${p.pointsEarned} Pts</td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function createPurchase(e) {
+            e.preventDefault();
+            const body = {
+                customerId: parseInt(document.getElementById('pur-customer-id').value),
+                purchaseAmount: parseFloat(document.getElementById('pur-amount').value)
+            };
+            try {
+                const res = await fetch(`${API_BASE}/purchases/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                if (!res.ok) throw new Error(await res.text());
+                const data = await res.json();
+                showToast(`Purchase recorded! Customer earned +${data.pointsEarned} points.`);
+                document.getElementById('pur-amount').value = '';
+                loadPurchases();
+                loadCustomers();
+            } catch (err) {
+                showToast(err.message || "Failed to record purchase", true);
+            }
+        }
+
+        async function loadLedger() {
+            try {
+                const res = await fetch(`${API_BASE}/ledger/getAll`);
+                const data = await res.json();
+                const tbody = document.getElementById('ledger-table-body');
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-gray-500">No ledger entries recorded yet.</td></tr>`;
+                    return;
+                }
+                tbody.innerHTML = data.map(l => {
+                    const isEarn = (l.transactionType || '').toUpperCase() === 'EARN';
+                    const badge = isEarn 
+                        ? `<span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded text-xs font-bold">EARN</span>`
+                        : `<span class="bg-purple-500/20 text-purple-300 border border-purple-500/40 px-2 py-0.5 rounded text-xs font-bold">REDEEM</span>`;
+                    return `
+                        <tr class="hover:bg-gray-750 transition">
+                            <td class="py-3 px-4 font-bold text-gray-400">#${l.id}</td>
+                            <td class="py-3 px-4 font-semibold text-white">Customer #${l.customerId}</td>
+                            <td class="py-3 px-4">${badge}</td>
+                            <td class="py-3 px-4 text-center font-bold ${isEarn ? 'text-emerald-400' : 'text-purple-400'}">
+                                ${isEarn ? '+' : '-'}${l.points} Pts
+                            </td>
+                            <td class="py-3 px-4 text-xs text-gray-400">${l.description || '-'}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function createLedgerEntry(e) {
+            e.preventDefault();
+            const body = {
+                customerId: parseInt(document.getElementById('led-customer-id').value),
+                points: parseInt(document.getElementById('led-points').value),
+                transactionType: document.getElementById('led-type').value,
+                description: document.getElementById('led-desc').value || 'Points redemption'
+            };
+            try {
+                const res = await fetch(`${API_BASE}/ledger/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                if (!res.ok) {
+                    const errText = await res.text();
+                    throw new Error(errText);
+                }
+                const data = await res.json();
+                showToast(`Ledger transaction #${data.id} (${data.transactionType}) processed!`);
+                document.getElementById('led-points').value = '';
+                document.getElementById('led-desc').value = '';
+                loadLedger();
+                loadCustomers();
+            } catch (err) {
+                showToast(err.message || "Failed to process transaction", true);
+            }
+        }
+
+        async function loadTiers() {
+            try {
+                const res = await fetch(`${API_BASE}/tiers/getAll`);
+                const data = await res.json();
+                const container = document.getElementById('tiers-cards-container');
+                if (data.length === 0) {
+                    container.innerHTML = `<div class="col-span-3 text-center py-6 text-gray-500">No tiers found.</div>`;
+                    return;
+                }
+                container.innerHTML = data.map(t => {
+                    const name = (t.tierName || '').toUpperCase();
+                    let color = 'from-amber-600 to-amber-800 border-amber-500/50';
+                    let icon = 'fa-shield';
+                    if (name === 'SILVER') { color = 'from-slate-500 to-slate-700 border-slate-400/50'; icon = 'fa-medal'; }
+                    if (name === 'GOLD') { color = 'from-yellow-500 to-amber-600 border-yellow-400/50'; icon = 'fa-crown'; }
+                    
+                    return `
+                        <div class="bg-gradient-to-br ${color} border rounded-2xl p-6 shadow-xl relative overflow-hidden text-white">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <span class="text-xs uppercase font-extrabold tracking-widest opacity-75">Reward Tier</span>
+                                    <h3 class="text-2xl font-black">${t.tierName}</h3>
+                                </div>
+                                <i class="fa-solid ${icon} text-3xl opacity-40"></i>
+                            </div>
+                            <div class="space-y-2 text-sm bg-black/20 rounded-xl p-3 backdrop-blur-sm">
+                                <div class="flex justify-between">
+                                    <span class="opacity-80">Min Points Required:</span>
+                                    <span class="font-bold">${t.minimumPoints} pts</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="opacity-80">Discount Reward:</span>
+                                    <span class="font-bold text-amber-200">${t.discountPercentage}% OFF</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCustomers();
+        });
+    </script>
+</body>
+</html>
